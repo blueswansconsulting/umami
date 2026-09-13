@@ -52,3 +52,5 @@ yarn-error.log*
 *.env.*
 
 *.dev.yml
+deploy/.env
+deploy/.env
