@@ -2,7 +2,7 @@ name: umami
 
 services:
   umami:
-    image: ghcr.io/umami-software/umami:postgresql-latest
+    image: ghcr.io/blueswansconsulting/umami:blueswans-3fff6be95134cccb9f37e94fcdaff54167cb15e1
     environment:
       DATABASE_URL: postgresql://umami:${DATABASE_PASSWORD}@umami-db:5432/umami
       CLIENT_IP_HEADER: x-visitor-ip
