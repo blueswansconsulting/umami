@@ -1,8 +1,6 @@
 #!/bin/sh
-# Copies the compose file and local secrets to the host and applies them.
+# /opt/umami on the host is a checkout of this repo's blueswans branch.
+# Deploying means: push, pull there, apply the compose file.
 set -eu
 HOST=${UMAMI_HOST:-root@91.98.124.241}
-DIR=$(cd "$(dirname "$0")/.." && pwd)
-test -f "$DIR/.env" || { echo "deploy/.env missing (copy .env.example)" >&2; exit 1; }
-scp -q "$DIR/docker-compose.yml" "$DIR/.env" "$HOST:/opt/umami/"
-ssh "$HOST" 'cd /opt/umami && chmod 600 .env && docker compose up -d && docker compose ps'
+ssh "$HOST" 'set -e; cd /opt/umami && git pull --ff-only && cd deploy && test -f .env && docker compose up -d && docker compose ps'

@@ -6,8 +6,10 @@ upstream branch from `master` and are sent as pull requests.
 
 ## Where it runs
 
-Host `91.98.124.241` (the shared Kamal host), directory `/opt/umami`, Docker
-Compose project `umami`, stock image `ghcr.io/umami-software/umami:postgresql-latest`
+Host `91.98.124.241` (the shared Kamal host). `/opt/umami` is a checkout of
+this branch; Compose runs from `/opt/umami/deploy` with project name `umami`
+(pinned by `name:` so the existing containers and the `umami_umami-db-data`
+volume are reused). Stock image `ghcr.io/umami-software/umami:postgresql-latest`
 (3.0.3 at the time of writing). Postgres 16 lives in the `umami-db-data` volume.
 
 Hostnames, all proxied by Cloudflare and routed by the shared `kamal-proxy`:
@@ -33,14 +35,16 @@ back to its normal detection for direct traffic.
 
 ## Deploying a change
 
-Secrets stay in `deploy/.env` (ignored; copy `.env.example`). Then:
+Secrets live only on the host in `/opt/umami/deploy/.env` (ignored; copy
+`.env.example`). Commit, push, then:
 
 ```sh
-deploy/bin/sync-to-server.sh   # copies compose + .env, runs docker compose up -d
+deploy/bin/sync-to-server.sh   # git pull on the host, docker compose up -d
 ```
 
 Updating the image is `docker compose pull && docker compose up -d` in
-`/opt/umami`; the health check on `/api/heartbeat` gates the swap.
+`/opt/umami/deploy`; the health check on `/api/heartbeat` gates the swap.
+Never edit files under `/opt/umami` by hand; `git status` there shows drift.
 
 ## Users and API access
 
