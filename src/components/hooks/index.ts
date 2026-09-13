@@ -62,6 +62,7 @@ export * from './queries/useTeamQuery';
 export * from './queries/useTeamsQuery';
 export * from './queries/useTeamWebsitesQuery';
 export * from './queries/useUpdateQuery';
+export * from './queries/useUserApiKeysQuery';
 export * from './queries/useUserQuery';
 export * from './queries/useUsersQuery';
 export * from './queries/useUserTeamsQuery';

@@ -427,6 +427,17 @@ export const labels: Record<string, string> = {
   twoFactorGlobalActiveTooltip: 'label.two-factor-global-active-tooltip',
   twoFactorVerify: 'label.two-factor-verify',
   twoFactorLogin: 'label.two-factor-login',
+  apiKeys: 'label.api-keys',
+  apiKey: 'label.api-key',
+  createApiKey: 'label.create-api-key',
+  expires: 'label.expires',
+  expired: 'label.expired',
+  lastUsed: 'label.last-used',
+  never: 'label.never',
+  revoke: 'label.revoke',
+  copy: 'label.copy',
+  done: 'label.done',
+  days: 'label.days',
 };
 
 export const messages: Record<string, string> = {
@@ -508,4 +519,7 @@ export const messages: Record<string, string> = {
   twoFactorErrorNoPendingSetup: 'message.two-factor-error-no-pending-setup',
   twoFactorErrorNotConfigured: 'message.two-factor-error-not-configured',
   replayMinDurationDescription: 'message.replay-min-duration-description',
+  apiKeysDescription: 'message.api-keys-description',
+  apiKeyCreated: 'message.api-key-created',
+  confirmRevoke: 'message.confirm-revoke',
 };

@@ -2,7 +2,7 @@ import { Column, Row, Text, Tooltip, TooltipTrigger } from '@umami/react-zen';
 import { IconLabel } from '@/components/common/IconLabel';
 import Link from '@/components/common/Link';
 import { useMessages, useNavigation } from '@/components/hooks';
-import { ArrowLeft, Settings2, ShieldCheck, UserCircle, Users } from '@/components/icons';
+import { ArrowLeft, KeyRound, Settings2, ShieldCheck, UserCircle, Users } from '@/components/icons';
 
 export function SettingsNav({
   isCollapsed,
@@ -46,6 +46,12 @@ export function SettingsNav({
           label: t(labels.security),
           path: renderUrl('/settings/security'),
           icon: <ShieldCheck />,
+        },
+        {
+          id: 'api-keys',
+          label: t(labels.apiKeys),
+          path: renderUrl('/settings/api-keys'),
+          icon: <KeyRound />,
         },
       ],
     },

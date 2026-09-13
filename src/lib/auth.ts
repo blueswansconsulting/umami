@@ -1,5 +1,7 @@
 import debug from 'debug';
+import { hashApiKey, isApiKeyActive, shouldTouchApiKey } from '@/lib/api-key';
 import {
+  API_KEY_HEADER,
   ROLE_PERMISSIONS,
   ROLES,
   SHARE_CONTEXT_HEADER,
@@ -10,6 +12,7 @@ import { createAuthKey, hash, secret } from '@/lib/crypto';
 import { createSecureToken, parseSecureToken, parseToken } from '@/lib/jwt';
 import redis from '@/lib/redis';
 import { ensureArray } from '@/lib/utils';
+import { getApiKeyByHash, touchApiKey } from '@/queries/prisma/apiKey';
 import { getUser } from '@/queries/prisma/user';
 
 const log = debug('umami:auth');
@@ -21,14 +24,18 @@ export function getBearerToken(request: Request) {
 }
 
 export async function checkAuth(request: Request) {
-  const token = getBearerToken(request);
+  const apiKey = request.headers.get(API_KEY_HEADER);
+  // A request that presents an API key is authenticated by that key alone; never fall back to a bearer token.
+  const token = apiKey ? undefined : getBearerToken(request);
   const payload = parseSecureToken(token, secret());
   const shareToken = await parseShareToken(request);
 
   let user = null;
   const { userId, authKey } = payload || {};
 
-  if (userId) {
+  if (apiKey) {
+    user = await getApiKeyUser(apiKey);
+  } else if (userId) {
     user = await getUser(userId, { includePassword: true });
 
     // Reject tokens issued before the current password.
@@ -51,6 +58,7 @@ export async function checkAuth(request: Request) {
 
   log({
     hasToken: !!token,
+    hasApiKey: !!apiKey,
     hasPayload: !!payload,
     hasAuthKey: !!authKey,
     hasShareToken: !!shareToken,
@@ -81,6 +89,22 @@ export async function checkAuth(request: Request) {
     shareToken,
     user,
   };
+}
+
+async function getApiKeyUser(key: string) {
+  const apiKey = await getApiKeyByHash(hashApiKey(key));
+
+  if (!apiKey || !isApiKeyActive(apiKey)) {
+    return null;
+  }
+
+  const user = await getUser(apiKey.userId);
+
+  if (user && shouldTouchApiKey(apiKey)) {
+    await touchApiKey(apiKey.id);
+  }
+
+  return user;
 }
 
 export async function saveAuth(data: any, expire = 0) {
