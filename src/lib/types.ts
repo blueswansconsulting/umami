@@ -19,6 +19,7 @@ export interface Auth {
     role: string;
     isAdmin: boolean;
   };
+  token?: string;
   shareToken?: {
     shareType?: number;
     websiteId?: string;

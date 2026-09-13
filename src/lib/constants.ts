@@ -10,6 +10,7 @@ export const LAST_TEAM_CONFIG = 'umami.last-team';
 export const VERSION_CHECK = 'umami.version-check';
 export const SHARE_TOKEN_HEADER = 'x-umami-share-token';
 export const SHARE_CONTEXT_HEADER = 'x-umami-share-context';
+export const API_KEY_HEADER = 'x-umami-api-key';
 export const SHARE_TOKEN_TYPE = 'share';
 export const CACHE_TOKEN_TYPE = 'cache';
 export const HOMEPAGE_URL = 'https://umami.is';

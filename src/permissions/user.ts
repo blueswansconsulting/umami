@@ -32,6 +32,11 @@ export async function canUpdateUser({ user }: Auth, viewedUserId: string) {
   return user.id === viewedUserId;
 }
 
+export async function canManageApiKeys({ user, token }: Auth, ownerId: string) {
+  // Keys are managed from a login session only, so a leaked key cannot mint replacements for itself.
+  return !!token && canUpdateUser({ user }, ownerId);
+}
+
 export async function canDeleteUser({ user }: Auth) {
   return user?.isAdmin ?? false;
 }
