@@ -5,12 +5,28 @@ on: [push, pull_request]
 env:
   DATABASE_URL: "postgresql://user:pass@localhost:5432/dummy"
   SKIP_DB_CHECK: 1
+  UMAMI_CONVERSION_INTEGRATION: 1
+  APP_SECRET: ci-conversion-test-secret
 
 jobs:
   build:
     # Upstream's ci.yml only runs in umami-software/umami; this mirrors it for forks.
     if: github.repository != 'umami-software/umami'
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: dummy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d dummy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +40,7 @@ jobs:
           node-version: 22
           cache: "pnpm"
       - run: pnpm install
+      - run: pnpm exec prisma migrate deploy
       - run: pnpm test
       - run: pnpm exec tsc --noEmit
       - run: pnpm build

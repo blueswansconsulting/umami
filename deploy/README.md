@@ -9,8 +9,10 @@ upstream branch from `master` and are sent as pull requests.
 Host `91.98.124.241` (the shared Kamal host). `/opt/umami` is a checkout of
 this branch; Compose runs from `/opt/umami/deploy` with project name `umami`
 (pinned by `name:` so the existing containers and the `umami_umami-db-data`
-volume are reused). Stock image `ghcr.io/umami-software/umami:postgresql-latest`
-(3.0.3 at the time of writing). Postgres 16 lives in the `umami-db-data` volume.
+volume are reused). The image is our fork, pinned in `deploy/docker-compose.yml`
+to an immutable commit tag. Update that pin, or use a reviewed Compose override
+with an immutable digest, when deploying receiver changes. Postgres 16 lives in
+the `umami-db-data` volume.
 
 Hostnames, all proxied by Cloudflare and routed by the shared `kamal-proxy`:
 
@@ -48,7 +50,43 @@ Never edit files under `/opt/umami` by hand; `git status` there shows drift.
 
 ## Users and API access
 
-Self-hosted Umami authenticates API calls with a bearer token from
-`POST /api/auth/login`; there are no API keys in upstream (they are a Cloud
-feature). TradeSites uses a dedicated `tradesites` user for provisioning
-websites and syncing pageviews.
+This fork supports user-owned API keys in the `x-umami-api-key` header as well
+as bearer login tokens. TradeSites uses a dedicated `tradesites` user for
+provisioning websites and syncing pageviews. Keys are authenticated as their
+owner and website permissions are still checked.
+
+## Server conversion receipt
+
+`POST /api/conversions` requires an active API key whose owner can update the
+requested website. It accepts `website` and `conversionId` UUIDs,
+`occurredAt` (ISO timestamp), an optional signed tracker `sessionCache`, and
+an allowlisted `data` object containing `quote_request_id` (equal to
+`conversionId`), `pathname`, and optional `source`, `landing_page`,
+`utm_source`, `utm_medium`, `utm_campaign`, `funnel_name`, `referrer_domain`
+(hostname only). Paths must be
+relative and contain no query string, fragment or newline. Do not send
+customer contact data, IP addresses or user agents. Consent and selecting
+server versus browser conversion ownership remain the sender's responsibility.
+
+Valid tracker cache links the conversion to the original website/session/visit,
+verified against stored records, without deriving a visitor from the server IP.
+An invalid supplied cache returns HTTP 400 with `error.code` equal to
+`invalid-session-cache`. A sender can explicitly resend without the invalid
+reference, preserving the same conversion ID, to record an unlinked receipt.
+No cache creates a deterministic anonymous session with
+`attribution_status=unlinked`; it does not guess or recover a previous visit.
+This creates no pageview and therefore does not increase headline visitors or
+visits in the default traffic statistics. Event-specific visitor counts and
+session lists can include this synthetic session; it is not an attributed visit.
+
+The success response is `{conversionId,eventId,linked,duplicate}`. The event
+name is `quote_request_submit`. Stable website/conversion event IDs do not
+depend on signing-secret rotation. PostgreSQL commits the event and its
+properties together; concurrent or repeated requests return the existing
+receipt without duplicating it. This endpoint deliberately rejects ClickHouse
+because its storage path does not offer this relational deduplication guarantee.
+
+Verification uses unit tests plus an isolated migrated PostgreSQL database:
+`UMAMI_CONVERSION_INTEGRATION=1 APP_SECRET=<test-only-secret> DATABASE_URL=<local-test-database> pnpm exec vitest run src/app/api/conversions`.
+The integration suite deliberately adds a temporary rejecting constraint to
+the test database to prove rollback. Never run it against production.
